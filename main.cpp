@@ -397,7 +397,7 @@ void user :: userLogin(){
             fin.close();
 
             if (found){
-                Sleep(3);
+                userOptions();
             } else {
                 head();
                 cout << centerText("Room number not found. Please try again or exit.") << endl;
