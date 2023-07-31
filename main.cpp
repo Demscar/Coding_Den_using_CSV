@@ -40,11 +40,15 @@ class admin{
 
 class user : public admin{
 
+    int roomN;  
+
     public:
         void userLogin();
-        int showMenu();
-        int bill;
+        void userOptions();
         void viewBill();
+        void orderFood();
+        void faq();
+        int showMenu();
     
 }us;
 
@@ -56,18 +60,22 @@ int main(){
     
     do{
         head();
-        cout << centerText("Check-in and Debug Out: Unwind and Code Away!") << endl <<endl;
-        cout << centerText("1. User Login") << endl;
-        cout << centerText("2. Staff Login") << endl;
-        cout << centerText("3. Exit") << endl;
+        cout << centerText("Check-in and Debug Out: Unwind and Code Away!") << endl <<endl << endl;
+        cout << centerText("1. User Login") << endl << endl;
+        cout << centerText("2. Staff Login") << endl <<endl;
+        cout << centerText("3. Exit") << endl << endl <<endl;
         cout << setw(80) << "" << "Enter you choice: ";
         cin >> ans;
 
         if(ans == 1){
-
+            us.userLogin();
         }
         else if(ans == 2){
             ad.adminLogin();
+        }
+
+        else if(ans == 3){
+            exit(1);
         }
 
         else{
@@ -93,7 +101,7 @@ string centerText(const string& text) {
     int totalPadding = consoleHeight - text.length();
     int leftPadding = totalPadding / 2;
     int rightPadding = totalPadding - leftPadding;
-    return string(leftPadding, ' ') + text + string(rightPadding, ' ');
+    return string(leftPadding, ' ') + text;
 }
 
 void head(){
@@ -150,7 +158,7 @@ void admin :: adminOptions(){
         cout << centerText("3. Manage Menu")<<endl;
         cout << centerText("4. Display Guest-List")<<endl;
         cout << centerText("5. Exit")<<endl;
-        cout << "\t\t\t\t\tEnter Choice: ";
+        cout << centerText("Enter Choice: ");
         cin >> ans;
 
         switch(ans){
@@ -187,7 +195,7 @@ void admin :: checkIn(){
     // Convert the current time to a string in the desired format
     tm* timeInfo = localtime(&currentTime);
     ostringstream oss;
-    oss << put_time(timeInfo, "%D-%m-%y"); // Format: DD-MM-YYY
+    oss << put_time(timeInfo, "%d-%m-%y"); // Format: DD-MM-YYY
     inDate = oss.str();
 
     cin.get();
@@ -363,3 +371,266 @@ void admin :: guestList(){
     fout.close();
 }
 
+void user :: userLogin(){
+
+    head();
+            cout << "\t\t\tEnter Room No.: ";
+
+            cin >> roomN;
+
+            ifstream fin("guestList.csv");
+            if (!fin.is_open()) {
+                cout << "ERROR!!!" << "\t" << "Couldn't open Guest-List, please contact admin." << endl;
+                cin.get();
+                cin.get();
+            }
+
+            bool found = false;
+            string line;
+            while (getline(fin, line)) {
+                istringstream iss(line);
+                string element;
+                getline(iss, element, ',');
+                int currentRoomNo = stoi(element);
+                if (currentRoomNo == roomN) {
+                    found = true;
+                    break;
+                }
+            }
+
+            fin.close();
+
+            if (found) {
+                head();
+                cout << centerText("Welcome to The Debugging Den!") << endl << endl;
+                cout << centerText("Is this your room? (yes/no): ");
+                string response;
+                cin.ignore();
+                getline(cin, response);
+
+                if (response == "yes" || response == "Yes" || response == "YES") {
+                    userOptions();
+                } else {
+                    head();
+                    cout << centerText("Please try again or exit.") << endl;
+                    cin.get();
+                }
+            } else {
+                head();
+                cout << centerText("Room number not found. Please try again or exit.") << endl;
+                cin.get();
+            }
+
+}
+
+void user :: userOptions(){
+
+        do{
+        head();
+        cout << centerText("1. View Menu")<<endl;
+        cout << centerText("2. Order Food")<<endl;
+        cout << centerText("3. View Bill")<<endl;
+        cout << centerText("4. FAQs")<<endl;
+        cout << centerText("5. Exit")<<endl;
+        cout << centerText("Enter Choice: ");
+        cin >> ans;
+
+        switch(ans){
+            case '1':{
+                showMenu();
+                break;
+            }
+            case '2':{
+                orderFood();
+                break;
+            }
+            case '3':{
+                viewBill();
+                break;
+            }
+            case '4':{
+                faq();
+                break;
+            }
+            default:{
+                head();
+                cout << "WRONG CHOICE!!!";
+                cin.get();
+            }
+        }}while(ans != '5');
+}
+
+void user ::orderFood(){
+
+    head();
+    cout << centerText("Order Food") << endl << endl;
+
+    // Show the menu to the user
+    int menuItems = showMenu();
+
+    // Ask the user to choose an item
+    int choice;
+    cout << "Enter the item number to order (1-" << menuItems - 1 << "): ";
+    cin >> choice;
+
+    if (choice < 1 || choice >= menuItems) {
+        cout << "Invalid choice. Please try again." << endl;
+        cin.get();
+        cin.get();
+        return;
+    }
+
+    // Get the selected food item and price
+    ifstream fin("menu.csv");
+    if (!fin.is_open()) {
+        cout << "ERROR!!!" << "\t" << "Couldn't open Menu file, please contact admin." << endl;
+        cin.get();
+        cin.get();
+        return;
+    }
+
+    string line;
+    int currentItem = 1;
+    string foodItem;
+    double foodPrice = 0.0;
+    while (getline(fin, line)) {
+        if (currentItem == choice) {
+            istringstream iss(line);
+            getline(iss, foodItem, ',');
+            iss >> foodPrice; // Read foodPrice as a double
+            break;
+        }
+    currentItem++;
+}
+    fin.close();
+
+    // Ask the user for the quantity of the item
+    int quantity;
+    cout << "Enter the quantity: ";
+    cin >> quantity;
+
+    if (quantity <= 0) {
+        cout << "Invalid quantity. Please try again." << endl;
+        cin.get();
+        cin.get();
+        return;
+    }
+
+    // Calculate the total cost of the food items
+    double totalCost = foodPrice * quantity;
+
+    // Update the food bill for the guest
+    ofstream fout("foodBill.csv", ios::app);
+    if (!fout.is_open()) {
+        cout << "ERROR!!!" << "\t" << "Couldn't open Food Bill file, please contact admin." << endl;
+        cin.get();
+        cin.get();
+        return;
+    }
+
+    fout << roomN << "," << totalCost << endl; // Use the stored roomNumber
+
+    fout.close();
+
+    head();
+    cout << centerText("Order Successful!") << endl;
+    cout << "You have ordered " << quantity << " " << foodItem << "(s) for a total cost of $" << totalCost << "." << endl;
+    cout << "Thank you for ordering!" << endl;
+    cin.get();
+    cin.get();
+}
+
+
+void user::viewBill() {
+    head();
+    cout << centerText("View Bill") << endl << endl;
+
+    // Read the guest list to find the check-in date
+    ifstream fin("guestList.csv");
+    if (!fin.is_open()) {
+        cout << "ERROR!!!" << "\t" << "Couldn't open Guest-List, please contact admin." << endl;
+        cin.get();
+        cin.get();
+        return;
+    }
+
+    bool found = false;
+    string line;
+    while (getline(fin, line)) {
+        istringstream iss(line);
+        string element;
+        getline(iss, element, ',');
+        int currentRoomNo = stoi(element);
+        if (currentRoomNo == roomN) {
+            getline(iss, roomType, ','); // Skip room type
+            getline(iss, inDate, ',');   // Read check-in date
+            found = true;
+            break;
+        }
+    }
+    fin.close();
+
+    if (!found) {
+        cout << "Guest with room number " << roomN << " not found." << endl;
+        cin.get();
+        cin.get();
+        return;
+    }
+
+    // Get the current date
+    time_t currentTime = time(nullptr);
+    tm* timeInfo = localtime(&currentTime);
+    ostringstream oss;
+    oss << put_time(timeInfo, "%D-%m-%y"); // Format: DD-MM-YYY
+    string currentDate = oss.str();
+
+    // Calculate the difference between check-in and current date
+    istringstream issInDate(inDate);
+    istringstream issCurrentDate(currentDate);
+    tm tmInDate = {}, tmCurrentDate = {};
+    issInDate >> get_time(&tmInDate, "%d-%m-%y");
+    issCurrentDate >> get_time(&tmCurrentDate, "%d-%m-%y");
+    time_t timeInDate = mktime(&tmInDate);
+    time_t timeCurrentDate = mktime(&tmCurrentDate);
+    double daysStayed = difftime(timeCurrentDate, timeInDate) / (60 * 60 * 24);
+
+    // Calculate the total bill based on rent_per_day and food bill
+    double rent_per_day = 1000.0; // You can set this to the appropriate value
+    double foodBill = 0.0;
+    ifstream finFoodBill("foodBill.csv");
+    if (finFoodBill.is_open()) {
+        string foodBillLine;
+        while (getline(finFoodBill, foodBillLine)) {
+            istringstream issBill(foodBillLine);
+            string roomNoStr;
+            double foodCost;
+            getline(issBill, roomNoStr, ',');
+            issBill >> foodCost;
+            int roomNo = stoi(roomNoStr);
+            if (roomNo == roomN) {
+                foodBill += foodCost;
+            }
+        }
+        finFoodBill.close();
+    }
+
+    double totalBill = daysStayed * rent_per_day + foodBill;
+
+    // Display the bill to the user
+    head();
+    cout << centerText("Your Bill") << endl << endl << endl;
+    cout << "Room No.: " << roomN << endl;
+    cout << "Room Type: " << roomType << endl;
+    cout << "Check-In Date: " << inDate << endl;
+    cout << "Days Stayed: " << fixed << setprecision(2) << daysStayed << endl;
+    cout << "Room Rent: $" << fixed << setprecision(2) << daysStayed * rent_per_day << endl;
+    cout << "Food Bill: $" << fixed << setprecision(2) << foodBill << endl;
+    cout << "Total Bill: $" << fixed << setprecision(2) << totalBill << endl;
+
+    cin.get();
+    cin.get();
+}
+
+void user :: faq(){
+
+}
