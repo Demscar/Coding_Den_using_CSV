@@ -455,10 +455,9 @@ void user::orderFood() {
     cout << "Enter the item number to order (1-" << menuItems - 1 << "): ";
     cin >> choice;
 
-    // Check if the input is valid
     if (choice < 1 || choice >= menuItems) {
         cout << "Invalid choice. Please try again." << endl;
-        cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Clear the input buffer
+        cin.ignore();
         cin.get();
         return;
     }
@@ -467,7 +466,7 @@ void user::orderFood() {
     ifstream fin("menu.csv");
     if (!fin.is_open()) {
         cout << "ERROR!!!" << "\t" << "Couldn't open Menu file, please contact admin." << endl;
-        cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Clear the input buffer
+        cin.ignore();
         cin.get();
         return;
     }
@@ -475,40 +474,29 @@ void user::orderFood() {
     string line;
     int currentItem = 1;
     string foodItem;
-    string priceStr;
     double foodPrice = 0.0;
 
     while (getline(fin, line)) {
         if (currentItem == choice) {
             istringstream iss(line);
-            getline(iss, foodItem, ',');
-            getline(iss, foodItem, ',');
-            getline(iss, priceStr, ',');
+            getline(iss, foodItem, ','); // Read food item
+            string priceStr;
+            getline(iss, priceStr, ','); // Read food price
+            foodPrice = stod(priceStr);
             break;
         }
-        // currentItem++;
+        currentItem++;
     }
     fin.close();
-
-    // Convert the priceStr to a double using stringstream
-    foodPrice = 0.0;
-    istringstream issPrice(priceStr);
-    if (!(issPrice >> foodPrice)) {
-        cout << "Error parsing the food price. Please contact admin." << endl;
-        cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Clear the input buffer
-        cin.get();
-        return;
-    }
 
     // Ask the user for the quantity of the item
     int quantity;
     cout << "Enter the quantity: ";
     cin >> quantity;
 
-    // Check if the quantity is valid
     if (quantity <= 0) {
         cout << "Invalid quantity. Please try again." << endl;
-        cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Clear the input buffer
+        cin.ignore();
         cin.get();
         return;
     }
@@ -516,27 +504,58 @@ void user::orderFood() {
     // Calculate the total cost of the food items
     double totalCost = foodPrice * quantity;
 
-    // Update the food bill for the guest
-    ofstream fout("foodBill.csv", ios::app);
-    if (!fout.is_open()) {
-        cout << "ERROR!!!" << "\t" << "Couldn't open Food Bill file, please contact admin." << endl;
-        cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Clear the input buffer
+    // Update the food bill for the guest in guestList.csv
+    ifstream finGuestList("guestList.csv");
+    ofstream foutTemp("temp_guestList.csv");
+    if (!finGuestList.is_open() || !foutTemp.is_open()) {
+        cout << "ERROR!!!" << "\t" << "Couldn't open Guest-List or temporary file, please contact admin." << endl;
+        cin.ignore();
         cin.get();
         return;
     }
 
-    fout << roomN << "," << totalCost << endl; // Use the stored roomNumber
+    string guestListLine;
+    while (getline(finGuestList, guestListLine)) {
+        istringstream iss(guestListLine);
+        string element;
+        vector<string> guestData;
+        while (getline(iss, element, ',')) {
+            guestData.push_back(element);
+        }
 
-    fout.close();
+        // Check if the room number matches the user's room number
+        if (stoi(guestData[0]) == roomN) {
+            // Update the bill amount for the guest
+            double currentBill = stod(guestData[7]);
+            currentBill += totalCost;
+            guestData[7] = to_string(currentBill);
+        }
+
+        // Write the updated guest data to the temporary file
+        for (size_t i = 0; i < guestData.size(); ++i) {
+            foutTemp << guestData[i];
+            if (i < guestData.size() - 1) {
+                foutTemp << ",";
+            }
+        }
+        foutTemp << endl;
+    }
+
+    finGuestList.close();
+    foutTemp.close();
+
+    // Remove the old guestList.csv and rename the temporary file
+    remove("guestList.csv");
+    rename("temp_guestList.csv", "guestList.csv");
 
     head();
     cout << centerText("Order Successful!") << endl;
     cout << "You have ordered " << quantity << " " << foodItem << "(s) for a total cost of $" << totalCost << "." << endl;
     cout << "Thank you for ordering!" << endl;
-
-    cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Clear the input buffer
+    cin.ignore();
     cin.get();
 }
+
 
 void user::viewBill() {
     head();
