@@ -25,7 +25,8 @@ class admin{
         vector<string> arr;
         string element;
         string name, cont, addr, roomType, inDate, outDate, bill, foodItem;
-        int roomNo, i = 0, temp = 0, foodPrice, foodNo;
+        int roomNo, i = 0, temp = 0, foodNo;
+        double foodPrice;
 
     public:
         char ans;
@@ -35,6 +36,7 @@ class admin{
         void checkOut();
         void mMenu();
         void guestList();
+        int showMenu();
 
 }ad;
 
@@ -48,7 +50,6 @@ class user : public admin{
         void viewBill();
         void orderFood();
         void faq();
-        int showMenu();
     
 }us;
 
@@ -238,36 +239,31 @@ void admin :: checkOut(){
 
 }
 
-int user :: showMenu(){
-
+int admin::showMenu() {
     head();
 
     fstream fout;
-
-    fout.open("menu.csv", ios :: in);
+    fout.open("menu.csv", ios::in);
 
     cout << left << setw(10) << "" << setw(20) << "ITEM No." << setw(30) << "FOOD ITEM" << "PRICE" << endl << endl;
 
     temp = 1;
-
     string line;
-    while (getline(fout, line)){ // Read each line from the file
+    while (getline(fout, line)) {
         ++temp;
         istringstream iss(line);
         string element;
         while (getline(iss, element, ',')) {
-            arr.push_back(element); // Print each element
-            ++i;
+            arr.push_back(element);
         }
-        cout << left << setw(10) << "" << setw(20) << arr[0] << setw(30) << arr[1] << arr[2] << endl << endl;
-        i = 0;
+        cout << left << setw(10) << "" << setw(20) << arr[0] << setw(30) << arr[1] << stod(arr[2]) << endl << endl;
         arr.clear();
     }
-    i = 0;
     fout.close();
 
     return temp;
 }
+
 
 void admin :: mMenu(){
 
@@ -400,21 +396,8 @@ void user :: userLogin(){
 
             fin.close();
 
-            if (found) {
-                head();
-                cout << centerText("Welcome to The Debugging Den!") << endl << endl;
-                cout << centerText("Is this your room? (yes/no): ");
-                string response;
-                cin.ignore();
-                getline(cin, response);
-
-                if (response == "yes" || response == "Yes" || response == "YES") {
-                    userOptions();
-                } else {
-                    head();
-                    cout << centerText("Please try again or exit.") << endl;
-                    cin.get();
-                }
+            if (found){
+                Sleep(3);
             } else {
                 head();
                 cout << centerText("Room number not found. Please try again or exit.") << endl;
@@ -427,12 +410,12 @@ void user :: userOptions(){
 
         do{
         head();
-        cout << centerText("1. View Menu")<<endl;
-        cout << centerText("2. Order Food")<<endl;
-        cout << centerText("3. View Bill")<<endl;
-        cout << centerText("4. FAQs")<<endl;
-        cout << centerText("5. Exit")<<endl;
-        cout << centerText("Enter Choice: ");
+        cout << left << setw(80) << "" << "1. View Menu" << endl;
+        cout << left << setw(80) << "" << "2. Order Food" << endl;
+        cout << left << setw(80) << "" << "3. View Bill" << endl;
+        cout << left << setw(80) << "" << "4. FAQs" << endl;
+        cout << left << setw(80) << "" << "5. Exit" << endl;
+        cout << left << setw(80) << "" << "Enter Choice: ";
         cin >> ans;
 
         switch(ans){
@@ -460,8 +443,7 @@ void user :: userOptions(){
         }}while(ans != '5');
 }
 
-void user ::orderFood(){
-
+void user::orderFood() {
     head();
     cout << centerText("Order Food") << endl << endl;
 
@@ -473,9 +455,10 @@ void user ::orderFood(){
     cout << "Enter the item number to order (1-" << menuItems - 1 << "): ";
     cin >> choice;
 
+    // Check if the input is valid
     if (choice < 1 || choice >= menuItems) {
         cout << "Invalid choice. Please try again." << endl;
-        cin.get();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Clear the input buffer
         cin.get();
         return;
     }
@@ -484,7 +467,7 @@ void user ::orderFood(){
     ifstream fin("menu.csv");
     if (!fin.is_open()) {
         cout << "ERROR!!!" << "\t" << "Couldn't open Menu file, please contact admin." << endl;
-        cin.get();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Clear the input buffer
         cin.get();
         return;
     }
@@ -492,26 +475,40 @@ void user ::orderFood(){
     string line;
     int currentItem = 1;
     string foodItem;
+    string priceStr;
     double foodPrice = 0.0;
+
     while (getline(fin, line)) {
         if (currentItem == choice) {
             istringstream iss(line);
             getline(iss, foodItem, ',');
-            iss >> foodPrice; // Read foodPrice as a double
+            getline(iss, foodItem, ',');
+            getline(iss, priceStr, ',');
             break;
         }
-    currentItem++;
-}
+        // currentItem++;
+    }
     fin.close();
+
+    // Convert the priceStr to a double using stringstream
+    foodPrice = 0.0;
+    istringstream issPrice(priceStr);
+    if (!(issPrice >> foodPrice)) {
+        cout << "Error parsing the food price. Please contact admin." << endl;
+        cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Clear the input buffer
+        cin.get();
+        return;
+    }
 
     // Ask the user for the quantity of the item
     int quantity;
     cout << "Enter the quantity: ";
     cin >> quantity;
 
+    // Check if the quantity is valid
     if (quantity <= 0) {
         cout << "Invalid quantity. Please try again." << endl;
-        cin.get();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Clear the input buffer
         cin.get();
         return;
     }
@@ -523,7 +520,7 @@ void user ::orderFood(){
     ofstream fout("foodBill.csv", ios::app);
     if (!fout.is_open()) {
         cout << "ERROR!!!" << "\t" << "Couldn't open Food Bill file, please contact admin." << endl;
-        cin.get();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Clear the input buffer
         cin.get();
         return;
     }
@@ -536,10 +533,10 @@ void user ::orderFood(){
     cout << centerText("Order Successful!") << endl;
     cout << "You have ordered " << quantity << " " << foodItem << "(s) for a total cost of $" << totalCost << "." << endl;
     cout << "Thank you for ordering!" << endl;
-    cin.get();
+
+    cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Clear the input buffer
     cin.get();
 }
-
 
 void user::viewBill() {
     head();
@@ -619,13 +616,13 @@ void user::viewBill() {
     // Display the bill to the user
     head();
     cout << centerText("Your Bill") << endl << endl << endl;
-    cout << "Room No.: " << roomN << endl;
-    cout << "Room Type: " << roomType << endl;
-    cout << "Check-In Date: " << inDate << endl;
-    cout << "Days Stayed: " << fixed << setprecision(2) << daysStayed << endl;
-    cout << "Room Rent: $" << fixed << setprecision(2) << daysStayed * rent_per_day << endl;
-    cout << "Food Bill: $" << fixed << setprecision(2) << foodBill << endl;
-    cout << "Total Bill: $" << fixed << setprecision(2) << totalBill << endl;
+    cout << left << setw(30) << " " << setw(15) << "Room No.: " << roomN << endl;
+    cout << left << setw(30) << " " << setw(15) << "Room Type: " << roomType << endl;
+    cout << left << setw(30) << " " << setw(15) << "Check-In Date: " << inDate << endl;
+    cout << left << setw(30) << " " << setw(15) << "Days Stayed: " << fixed << setprecision(2) << daysStayed << endl;
+    cout << left << setw(30) << " " << setw(15) << "Room Rent: $" << fixed << setprecision(2) << daysStayed * rent_per_day << endl;
+    cout << left << setw(30) << " " << setw(15) << "Food Bill: $" << fixed << setprecision(2) << foodBill << endl;
+    cout << left << setw(30) << " " << setw(15) << "Total Bill: $" << fixed << setprecision(2) << totalBill << endl;
 
     cin.get();
     cin.get();
