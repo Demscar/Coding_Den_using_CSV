@@ -1,4 +1,4 @@
-# ✨ The Coding Den ✨
+### ✨ The Coding Den ✨
 
 Welcome to The Coding Den! 🏨🔮 This is a simple console-based hotel management system that allows users to check-in, order food, view bills, and more. The project is developed in C++ and aims to provide a smooth user experience.
 
@@ -29,6 +29,7 @@ git clone https://github.com/your-username/the-coding-den.git
 4. Follow the on-screen instructions to navigate through the system.
 
 Usage 📋
+
 🔒 When running the program, you will be prompted to either login as a user or staff (admin).
 
 🏠 If you select the user login option, you will need to provide your room number to proceed.
